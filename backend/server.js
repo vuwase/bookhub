@@ -1,289 +1,329 @@
-const express = require("express")
-const cors = require("cors")
-const helmet = require("helmet")
-const rateLimit = require("express-rate-limit")
-const { Pool } = require("pg")
-require("dotenv").config()
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const { Pool } = require("pg");
+require("dotenv").config();
 
-const bookRoutes = require("./routes/books")
-const authRoutes = require("./routes/auth")
-const errorHandler = require("./middleware/errorHandler")
-
-const app = express()
+const app = express();
 
 // Database connection with better error handling
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: false, // Disable SSL for local development
-  max: 20, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
-})
+  user: process.env.DB_USER || "postgres",
+  host: process.env.DB_HOST || "localhost",
+  database: process.env.DB_NAME || "bookhub",
+  password: process.env.DB_PASSWORD || "",
+  port: process.env.DB_PORT || 5432,
+  ssl: false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 
 // Test database connection with detailed error handling
 const testDatabaseConnection = async () => {
   try {
-    console.log("🔍 Testing database connection...")
-    console.log(`📊 Connecting to: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`)
-    console.log(`👤 User: ${process.env.DB_USER}`)
+    console.log("🔍 Testing database connection...");
+    console.log(`📊 Connecting to: ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || "bookhub"}`);
+    console.log(`👤 User: ${process.env.DB_USER || "postgres"}`);
 
-    const client = await pool.connect()
-    const result = await client.query("SELECT NOW() as current_time")
+    const client = await pool.connect();
+    const result = await client.query("SELECT NOW() as current_time");
 
-    console.log("✅ Database connection successful!")
-    console.log(`⏰ Current time: ${result.rows[0].current_time}`)
+    console.log("✅ Database connection successful!");
+    console.log(`⏰ Current time: ${result.rows[0].current_time}`);
 
-    client.release()
-    return true
+    client.release();
+    return true;
   } catch (error) {
-    console.error("❌ Database connection failed:")
-    console.error(`   Error Code: ${error.code}`)
-    console.error(`   Error Message: ${error.message}`)
+    console.error("❌ Database connection failed:");
+    console.error(`   Error Code: ${error.code}`);
+    console.error(`   Error Message: ${error.message}`);
 
     if (error.code === "ECONNREFUSED") {
-      console.error("   🔧 Solution: Make sure PostgreSQL is running on your system")
-      console.error("   📝 Try: brew services start postgresql (Mac) or sudo service postgresql start (Linux)")
+      console.error("   🔧 Solution: Make sure PostgreSQL is running on your system");
+      console.error("   📝 Try: brew services start postgresql (Mac) or sudo service postgresql start (Linux)");
     } else if (error.code === "28P01") {
-      console.error("   🔧 Solution: Check your database credentials in .env file")
+      console.error("   🔧 Solution: Check your database credentials in .env file");
     } else if (error.code === "3D000") {
-      console.error("   🔧 Solution: Database doesn't exist. Create it first:")
-      console.error("   📝 Run: CREATE DATABASE bookhub;")
+      console.error("   🔧 Solution: Database doesn't exist. Create it first:");
+      console.error("   📝 Run: CREATE DATABASE bookhub;");
     }
 
-    return false
+    return false;
   }
-}
+};
 
 // Make database available to routes
-app.locals.db = pool
+app.locals.db = pool;
 
 // Trust proxy for Codespaces/production environments
-app.set("trust proxy", 1)
+app.set("trust proxy", 1);
 
 // Security middleware
-app.use(helmet())
+app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: {
     success: false,
     message: "Too many requests from this IP, please try again later.",
   },
   skip: (req) => process.env.NODE_ENV === "development",
-})
-app.use(limiter)
+});
+app.use(limiter);
 
-// CORS configuration for Codespaces
+// CORS configuration for frontend connection
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://localhost:5173", process.env.FRONTEND_URL || "http://localhost:5173"],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (
+      process.env.NODE_ENV === 'development' || 
+      origin.includes('localhost') || 
+      origin.includes(process.env.FRONTEND_URL)
+    ) {
+      return callback(null, true);
+    }
+    
+    // Reject other origins in production
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}
-app.use(cors(corsOptions))
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
 
 // Body parser middleware
-app.use(express.json({ limit: "10mb" }))
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-// Routes - Fix the auth routes mounting
-app.use("/api/auth", authRoutes) // This should work now
-app.use("/api/books", bookRoutes)
-
-// Comprehensive API test endpoint
-app.get("/api/test/connection", async (req, res) => {
-  try {
-    // Test database connection
-    let dbStatus = "Connected"
-    let bookCount = 0
-
-    try {
-      const result = await pool.query("SELECT COUNT(*) as count FROM books")
-      bookCount = Number.parseInt(result.rows[0].count)
-    } catch (dbError) {
-      dbStatus = "Disconnected"
-      console.error("Database test failed:", dbError.message)
-    }
-
-    res.json({
-      success: true,
-      message: "🎉 Full API connection test successful!",
-      timestamp: new Date().toISOString(),
-      server_info: {
-        environment: process.env.NODE_ENV || "development",
-        port: process.env.PORT || 5000,
-        node_version: process.version,
-      },
-      database: {
-        status: dbStatus,
-        total_books: bookCount,
-        connection_time: new Date().toISOString(),
-      },
-      frontend_connection: {
-        note: "If you can see this response, your frontend is successfully connected to the backend!",
-        cors_status: "Enabled",
-        request_origin: req.get("origin") || "Direct API call",
-      },
-    })
-  } catch (error) {
-    console.error("Connection test error:", error)
-    res.status(500).json({
-      success: false,
-      message: "Connection test failed",
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    })
-  }
-})
-
-// Enhanced health check endpoint
-app.get("/api/health", async (req, res) => {
-  try {
-    // Test database connection
-    let dbInfo = { status: "No database configured" }
-
-    try {
-      const result = await pool.query("SELECT NOW() as server_time, COUNT(*) as book_count FROM books")
-      dbInfo = {
-        status: "Connected",
-        server_time: result.rows[0].server_time,
-        total_books: Number.parseInt(result.rows[0].book_count),
-      }
-    } catch (dbError) {
-      dbInfo = {
-        status: "Disconnected",
-        error: dbError.message,
-      }
-    }
-
-    res.json({
-      success: true,
-      message: "Book Library API is running",
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || "development",
-      database: dbInfo,
-      version: "1.0.0",
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Health check failed",
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    })
-  }
-})
-
-// Root endpoint with better info
+// API Routes
 app.get("/", (req, res) => {
   res.json({
-    success: true,
-    message: "📚 Welcome to Book Library API",
-    version: "1.0.0",
-    environment: process.env.NODE_ENV,
+    message: "Welcome to BookHub API",
     endpoints: {
-      health: "GET /api/health - Check API status",
-      test: "GET /api/test - Simple test",
-      connection: "GET /api/test/connection - Full connection test",
-      books: "GET /api/books - Get all books",
-    },
-  })
-})
-
-// Simple test endpoint
-app.get("/api/test", (req, res) => {
-  res.json({
-    success: true,
-    message: "🎉 Test endpoint working!",
-    timestamp: new Date().toISOString(),
-  })
-})
-
-// Debug endpoint to show all available routes
-app.get("/api/debug/routes", (req, res) => {
-  res.json({
-    success: true,
-    message: "Available API routes",
-    routes: {
-      public_routes: [
-        "GET /api/health - Health check",
-        "GET /api/test - Test endpoint",
-        "GET /api/books - Get all books",
-        "GET /api/books/:id - Get single book",
-        "GET /api/books/stats/summary - Get book statistics",
-        "POST /api/auth/register - Register new user",
-        "POST /api/auth/login - Login user",
-      ],
-      protected_routes: [
-        "POST /api/books - Create book (requires auth)",
-        "PUT /api/books/:id - Update book (requires auth)",
-        "DELETE /api/books/:id - Delete book (requires auth)",
-      ],
-    },
-    authentication_note: "To access protected routes, first register/login to get a JWT token",
-  })
-})
-
-// Enhanced 404 handler
-app.use("*", (req, res) => {
-  console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`)
-
-  res.status(404).json({
-    success: false,
-    message: `Route ${req.method} ${req.originalUrl} not found`,
-    suggestion: "Visit /api/test/connection to test your API connection",
-    available_routes: [
-      "GET / - API info",
-      "GET /api/health - Health check",
-      "GET /api/test - Simple test",
-      "GET /api/test/connection - Full connection test",
-      "GET /api/books - Get all books",
-    ],
-  })
-})
-
-// Error handler middleware
-app.use(errorHandler)
-
-const PORT = process.env.PORT || 5000
-
-// Start server with database connection test
-const startServer = async () => {
-  console.log("🚀 Starting Book Library API...")
-  console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`)
-  console.log(`🌐 Port: ${PORT}`)
-
-  // Test database connection first
-  const dbConnected = await testDatabaseConnection()
-
-  app.listen(PORT, () => {
-    console.log(`\n✅ Server running on port ${PORT}`)
-    console.log(`🔗 Local URL: http://localhost:${PORT}`)
-    console.log(`🔗 Codespaces URL: Check PORTS tab for forwarded URL`)
-    console.log(`🏥 Health Check: /api/health`)
-    console.log(`🧪 Test API: /api/test`)
-    console.log(`🔍 Debug Routes: /api/debug/routes`)
-
-    if (!dbConnected) {
-      console.log("\n⚠️  WARNING: Database connection failed!")
+      books: "/api/books",
+      health: "/api/health",
+      test: "/api/test",
+      debug: "/api/debug/routes"
     }
+  });
+});
 
-    console.log("\n📖 Available endpoints:")
-    console.log("   🟢 GET    / - API information")
-    console.log("   🟢 GET    /api/health - Health check")
-    console.log("   🟢 GET    /api/test - Simple test")
-    console.log("   🟢 GET    /api/test/connection - Full connection test")
-    console.log("   🟢 GET    /api/books - Get all books")
-  })
-}
+// Health Check
+app.get("/api/health", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT COUNT(*) FROM books");
+    res.json({ 
+      status: "healthy", 
+      booksCount: result.rows[0].count,
+      timestamp: new Date() 
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
 
-startServer().catch(console.error)
+// Test Route
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API test successful" });
+});
 
-module.exports = app
+// Test Database Connection
+app.get("/api/test/connection", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT current_database() as db, current_schema() as schema, COUNT(*) as book_count FROM books"
+    );
+    res.json({
+      status: "success",
+      database: rows[0].db,
+      schema: rows[0].schema,
+      bookCount: rows[0].book_count,
+      frontendConnection: req.get("origin") || "Direct API call"
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Debug Routes
+app.get("/api/debug/routes", (req, res) => {
+  const routes = [
+    { method: "GET", path: "/api/books", description: "Get all books" },
+    { method: "GET", path: "/api/books/:id", description: "Get single book" },
+    { method: "POST", path: "/api/books", description: "Create new book" },
+    { method: "PUT", path: "/api/books/:id", description: "Update book" },
+    { method: "DELETE", path: "/api/books/:id", description: "Delete book" },
+    { method: "GET", path: "/api/books/filter", description: "Filter books" }
+  ];
+  res.json(routes);
+});
+
+// BOOK CRUD ENDPOINTS
+
+// Get all books
+app.get("/api/books", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM books ORDER BY title");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get single book
+app.get("/api/books/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query("SELECT * FROM books WHERE id = $1", [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create book
+app.post("/api/books", async (req, res) => {
+  try {
+    const { title, author, genre, rating, pages, year, description, cover_image, isbn, publisher } = req.body;
+    
+    if (!title || !author) {
+      return res.status(400).json({ error: "Title and author are required" });
+    }
+    
+    const { rows } = await pool.query(
+      `INSERT INTO books (
+        title, author, genre, rating, pages, year, 
+        description, cover_image, isbn, publisher
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *`,
+      [title, author, genre, rating, pages, year, description, cover_image, isbn, publisher]
+    );
+    
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update book
+app.put("/api/books/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, author, genre, rating, pages, year, description, cover_image, isbn, publisher } = req.body;
+    
+    const existing = await pool.query("SELECT * FROM books WHERE id = $1", [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    const { rows } = await pool.query(
+      `UPDATE books SET
+        title = $1, author = $2, genre = $3, rating = $4,
+        pages = $5, year = $6, description = $7,
+        cover_image = $8, isbn = $9, publisher = $10,
+        updated_at = NOW()
+      WHERE id = $11
+      RETURNING *`,
+      [title, author, genre, rating, pages, year, description, cover_image, isbn, publisher, id]
+    );
+    
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete book
+app.delete("/api/books/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const existing = await pool.query("SELECT * FROM books WHERE id = $1", [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    await pool.query("DELETE FROM books WHERE id = $1", [id]);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Filter books
+app.get("/api/books/filter", async (req, res) => {
+  try {
+    const { genre, minRating, maxYear, search } = req.query;
+    let query = "SELECT * FROM books WHERE 1=1";
+    const params = [];
+    let paramCount = 1;
+    
+    if (genre) {
+      query += ` AND genre ILIKE $${paramCount++}`;
+      params.push(`%${genre}%`);
+    }
+    
+    if (minRating) {
+      query += ` AND rating >= $${paramCount++}`;
+      params.push(parseFloat(minRating));
+    }
+    
+    if (maxYear) {
+      query += ` AND year <= $${paramCount++}`;
+      params.push(parseInt(maxYear));
+    }
+    
+    if (search) {
+      query += ` AND (title ILIKE $${paramCount} OR author ILIKE $${paramCount++})`;
+      params.push(`%${search}%`);
+    }
+    
+    query += " ORDER BY title";
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Endpoint not found" });
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+const startServer = async () => {
+  const dbConnected = await testDatabaseConnection();
+  
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🔗 Local: http://localhost:${PORT}`);
+    
+    if (!dbConnected) {
+      console.log("⚠️  Warning: Database connection failed");
+    }
+  });
+};
+
+startServer().catch(console.error);
+
+module.exports = app;
