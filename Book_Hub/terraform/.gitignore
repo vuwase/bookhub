@@ -1,0 +1,9 @@
+# Terraform local directories
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Executables and binaries
+*.exe
+*.zip
