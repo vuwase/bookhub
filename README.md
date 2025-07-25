@@ -29,4 +29,4 @@ DB_PASSWORD
 DB_NAME
 
 🌐 Public Deployment
-See /phase.md for deployment details.
+See phase.md for deployment details.
