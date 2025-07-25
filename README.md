@@ -1,66 +1,32 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/BKnvCbPL)
-[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=19763420)
-Book Hub: A React Discovery App (Summative Project)
+# BookHub Backend
 
-This project aims to build a web application, Book Hub, for discovering books using React with TypeScript for the frontend and a backend API (JavaScript or Python) to manage book data.
+This is the backend of the BookHub application, containerized using Docker.
 
-## Project Goals
+## 🐳 Local Development with Docker
 
-- Develop a user-friendly interface for browsing books.
-- Implement functionalities for filtering and searching books by genre, author, publication date, etc.
-- Utilize React and TypeScript to build a responsive and interactive frontend.
-- Design a backend API to handle book data storage and retrieval.
-- Integrate the frontend and backend for a seamless user experience.
+### Prerequisites
 
-## Technical Specifications
+- Docker & Docker Compose installed
+- Node.js & PostgreSQL if running without Docker
 
-### Frontend (React with TypeScript):
+### 🚀 Run with Docker Compose
 
-- Implement components for displaying book listings, individual book details, and filtering options.
-- Utilize TypeScript for type safety and improved code maintainability.
-- Design a responsive layout that adapts to different screen sizes.
-- Integrate state management for filtering and user interactions (e.g., Redux, Context API).
-- Implement functionalities like the search bar, genre filters, and sorting by various criteria (date, rating).
-- Consider using a UI library like Material-UI or Bootstrap for a polished look.
-- Handle user interactions for potential future functionalities like user accounts and book ratings.
+```bash
+docker-compose up --build
 
-### Backend (JavaScript or Python)
+🛑 Stop the containers
+docker-compose down
 
-- Design and build a RESTful API to manage book data (CRUD operations: Create, Read, Update, Delete).
-- Choose Node.js (JavaScript) or a Python framework like Django, Fast API or Flask for the backend.
-- Implement a data storage solution (e.g., MongoDB, PostgreSQL) to store book information.
-- Design API endpoints for fetching book listings, individual book details, and handling filter requests.
-- Implement proper authentication and authorization mechanisms if user accounts are planned for the future.
+📦 Environment Variables
+Configured in docker-compose.yml, including:
 
-## Assessment Criteria
+DB_HOST
 
-### React Skills (70%):
+DB_USER
 
-- Effective use of React components and lifecycle methods.
-- Implementation of state management for filtering and user interactions.
-- Utilization of TypeScript for type safety and code maintainability.
-- Design of a responsive and user-friendly UI.
-- Integration of search and filter functionalities for books.
+DB_PASSWORD
 
-### Backend Development (20%):
+DB_NAME
 
-- Design and implementation of a RESTful API using Node.js or a Python framework.
-- Connection to a chosen database for book data storage.
-- Implementation of API endpoints for fetching and filtering book data.
-- Proper handling of data requests and responses.
-
-### Project Completion and Functionality (10%):
-
-- Overall project functionality and meeting project goals.
-- Documentation of code and functionalities.
-- Error handling and user experience considerations.
-
-## Additional Considerations:
-
-- Implement pagination for displaying large sets of book listings.
-- Consider user authentication and authorization for future functionalities like user accounts and book ratings.
-- Deploy the application to a hosting platform for accessibility.
-
-## Submission
-
-This work will be submitted with a URL of well-documented GitHub Repositories / Repository (in case you put the frontend and backend under one repo).
+🌐 Public Deployment
+See /phase.md for deployment details.
