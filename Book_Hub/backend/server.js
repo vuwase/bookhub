@@ -1,3 +1,27 @@
+const { Client } = require('pg');
+const RETRY_INTERVAL = 5000;
+
+async function connectWithRetry() {
+  const client = new Client({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: 5432,
+  });
+
+  try {
+    await client.connect();
+    console.log("✅ Connected to PostgreSQL");
+    client.end();
+  } catch (err) {
+    console.error("❌ PostgreSQL not ready, retrying in 5s...");
+    setTimeout(connectWithRetry, RETRY_INTERVAL);
+  }
+}
+
+connectWithRetry();
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -6,6 +30,7 @@ const { Pool } = require("pg");
 require("dotenv").config();
 
 const app = express();
+
 
 // Database connection with better error handling
 const pool = new Pool({
