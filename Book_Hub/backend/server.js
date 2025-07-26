@@ -139,6 +139,15 @@ app.get("/", (req, res) => {
     }
   });
 });
+const path = require('path');
+
+// Serve static files from the React frontend build
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// For any request that doesn't match API routes, serve React's index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
 
 // Health Check
 app.get("/api/health", async (req, res) => {

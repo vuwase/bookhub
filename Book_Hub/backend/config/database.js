@@ -2,7 +2,7 @@ const { Pool } = require("pg");
 require("dotenv").config();
 
 const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
+  host: process.env.DB_HOST || "database",
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || "bookhub",  // Changed from "postgres" to "bookhub"
   user: process.env.DB_USER || "postgres",    // Added fallback for user
