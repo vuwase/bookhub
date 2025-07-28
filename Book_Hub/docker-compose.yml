@@ -15,7 +15,9 @@ services:
     restart: unless-stopped
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: bookhub-backend
     ports:
       - "5000:5000"
@@ -26,19 +28,8 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=bookhub
-    volumes:
-      - ./backend:/app
     depends_on:
       - database
-    restart: unless-stopped
-
-  frontend:
-    build: ./frontend
-    container_name: bookhub-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
     restart: unless-stopped
 
 volumes:

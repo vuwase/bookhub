@@ -1,7 +1,7 @@
 ## Phase 2 – BookHub Submission
 
 **Deployed Frontend URL:**  
-https://<your-deployment-url>
+https://<https://ashy-water-04342ed03.2.azurestaticapps.net>
 
 ### 📸 Screenshots
 
