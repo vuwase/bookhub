@@ -1,25 +1,18 @@
-# Stage 1: Build frontend
-FROM node:18 AS frontend-builder
+# Use official Node.js base image
+FROM node:18-alpine
 
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ .
-RUN npm run build
-
-# Stage 2: Build backend with frontend build included
-FROM node:18 AS backend-builder
-
+# Create app directory
 WORKDIR /app
-COPY backend/package*.json ./
-RUN npm install
-COPY backend/ .
 
-# Copy frontend build files from frontend-builder stage
-COPY --from=frontend-builder /app/frontend/build ./frontend/build
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install --production
 
-# Expose the backend port
-EXPOSE 4000
+# Copy rest of the code
+COPY . .
 
-# Start the backend server
-CMD ["node", "server.js"]
+# Expose port (adjust if your app uses a different one)
+EXPOSE 5000
+
+# Start the server
+CMD [ "node", "server.js" ]
