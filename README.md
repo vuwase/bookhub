@@ -1,4 +1,5 @@
 
+
 # 📚 BookHub Fullstack Application
 
 **BookHub** is a fullstack web application for discovering and managing books. It consists of a Node.js + PostgreSQL backend and a React frontend. The app is containerized using Docker and deployed via Azure.
@@ -13,6 +14,25 @@ Book\_Hub/
 ├── docker-compose.yml
 ├── README.md
 └── phase.md
+
+
+
+=======
+# 📚 BookHub Fullstack Application
+
+**BookHub** is a fullstack web application for discovering and managing books. It consists of a Node.js + PostgreSQL backend and a React frontend. The app is containerized using Docker and deployed via Azure.
+
+---
+
+## 📦 Project Structure
+
+Book\_Hub/
+├── backend/       # Node.js API backend
+├── frontend/      # React frontend
+├── docker-compose.yml
+├── README.md
+└── phase.md
+
 
 
 
@@ -69,6 +89,7 @@ The frontend is deployed to **Azure App Service** and accessible publicly:
 * 📍 Geolocation-aware search
 * 🔔 Real-time notifications (coming soon)
 
+
 ---
 
 ## 👩‍💻 Contributors
@@ -84,4 +105,20 @@ The frontend is deployed to **Azure App Service** and accessible publicly:
 * Code and CI/CD integrated via GitHub & Azure
 
   <!-- This change was made for peer review branch -->
+
+=======
+
+---
+
+## 👩‍💻 Contributors
+
+* Vaste Uwase
+
+---
+
+## 📄 Notes
+
+* Uses PostgreSQL with PostGIS for spatial data
+* Docker ensures consistent development and deployment
+* Code and CI/CD integrated via GitHub & Azure
 
