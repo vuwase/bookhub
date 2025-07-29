@@ -82,3 +82,6 @@ The frontend is deployed to **Azure App Service** and accessible publicly:
 * Uses PostgreSQL with PostGIS for spatial data
 * Docker ensures consistent development and deployment
 * Code and CI/CD integrated via GitHub & Azure
+
+  <!-- This change was made for peer review branch -->
+
