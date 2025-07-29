@@ -5,7 +5,7 @@
 
 ## 📸 Screenshots
 
-![Home Page](./frontend/screenshots/homepage.png) 
+![Home Page](./frontend/screenshots/homepage.png)
 ![Search Feature](./frontend/screenshots/all%20resources.png)
 
 ### 🔗 Pull Request  
