@@ -1,16 +1,16 @@
-## Phase 2 – BookHub Submission
+# Phase 2 – BookHub Submission
 
 **Deployed Frontend URL:**  
-https://<https://ashy-water-04342ed03.2.azurestaticapps.net>
+<https://bookhub-frontend.azurewebsites.net>
 
-### 📸 Screenshots
+## 📸 Screenshots
 
-![Home Page](./screenshots/homepage.png)  
-![Search Feature](./screenshots/search.png)
+![Home Page](./frontend/screenshots/homepage.png) 
+![Search Feature](./frontend/screenshots/all%20resources.png)
 
 ### 🔗 Pull Request  
 
-[GitHub PR Link](https://github.com/vuwase/bookhub/pull/xx)
+[GitHub PR Link](https://github.com/Ange-Mukundente/agricare-planner/pull/34)
 
 ---
 
