@@ -1,30 +1,23 @@
 name: Frontend CD Pipeline
 on:
   push:
-    branches: [ "main" ]  # Trigger on production merges
-  pull_request:
-    branches: [ "develop" ]  # Optional: Add staging triggers
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production  # Enables manual approval if configured
-    permissions:
-      contents: read
-      deployments: write
+    environment: production
 
     steps:
-      # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # 2. Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
           cache: 'npm'
+          cache-dependency-path: './Book_Hub/frontend/package-lock.json'  # Critical fix
 
-      # 3. Install & build (with dependency scanning)
       - name: Install dependencies
         run: npm ci --audit
         working-directory: ./Book_Hub/frontend
@@ -32,24 +25,20 @@ jobs:
       - name: Run security audit
         run: npm audit --production
         working-directory: ./Book_Hub/frontend
-        continue-on-error: true  # Don't fail pipeline for minor vulnerabilities
+        continue-on-error: true
 
       - name: Build frontend
         run: npm run build
         working-directory: ./Book_Hub/frontend
 
-      # 4. Security scan (Trivy for built files)
       - name: Scan production artifacts
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           severity: 'CRITICAL'
-          ignore-unfixed: true
-          exit-code: '1'  # Fail on critical vulnerabilities
-          scan-ref: ./Book_Hub/frontend/dist  # Scans built files
+          scan-ref: ./Book_Hub/frontend/dist
 
-      # 5. Deploy to Azure
-      - name: Deploy to Azure App Service
+      - name: Deploy to Azure
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'bookhub-frontend'
