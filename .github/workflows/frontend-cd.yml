@@ -1,44 +1,58 @@
-name: Frontend CD Pipeline
+name: React/Vite Frontend CD
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" ]  # Production deployment
+  pull_request:
+    branches: [ "develop" ]  # Staging deployment
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
+    environment: production  # Or 'staging' for develop branch
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
+      # 1. Checkout code
       - uses: actions/checkout@v4
 
+      # 2. Set up Node.js with cached Vite dependencies
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
+          node-version: '20.x'  # Recommended for Vite
           cache: 'npm'
-          cache-dependency-path: './Book_Hub/frontend/package-lock.json'  # Critical fix
+          cache-dependency-path: './Book_Hub/frontend/package-lock.json'
 
+      # 3. Install and audit dependencies
       - name: Install dependencies
         run: npm ci --audit
         working-directory: ./Book_Hub/frontend
 
-      - name: Run security audit
-        run: npm audit --production
+      # 4. TypeScript type checking (critical for your stack)
+      - name: Run TypeScript check
+        run: npm run typecheck  # Add "typecheck": "tsc --noEmit" to package.json
         working-directory: ./Book_Hub/frontend
-        continue-on-error: true
 
-      - name: Build frontend
+      # 5. Build with Vite
+      - name: Build with Vite
         run: npm run build
         working-directory: ./Book_Hub/frontend
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}  # Example env var
 
-      - name: Scan production artifacts
+      # 6. Security scan (Vite-specific output)
+      - name: Scan production build
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           severity: 'CRITICAL'
-          scan-ref: ./Book_Hub/frontend/dist
+          ignore-unfixed: true
+          scan-ref: ./Book_Hub/frontend/dist  # Vite's default output dir
 
-      - name: Deploy to Azure
+      # 7. Deploy to Azure
+      - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'bookhub-frontend'

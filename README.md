@@ -1,5 +1,4 @@
 
-
 # 📚 BookHub Fullstack Application
 
 **BookHub** is a fullstack web application for discovering and managing books. It consists of a Node.js + PostgreSQL backend and a React frontend. The app is containerized using Docker and deployed via Azure.
