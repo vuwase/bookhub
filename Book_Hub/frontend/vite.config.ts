@@ -4,6 +4,20 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Cache-busting for JS/CSS
+        entryFileNames: `assets/[name].[hash].js`,
+        chunkFileNames: `assets/[name].[hash].js`,
+        assetFileNames: `assets/[name].[hash].[ext]`,
+      },
+    },
+  },
+  server: {
+    // Ensure HMR works in development
+    hmr: true,
+  },
   resolve: {
     alias: {
       '@mui/material': path.resolve(__dirname, 'node_modules/@mui/material/esm'),
