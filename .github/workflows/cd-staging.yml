@@ -18,24 +18,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures package-lock.json is fetched
+          fetch-depth: 0  # Ensures full history including package-lock.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'Book_Hub/frontend/package-lock.json'  # Specific path
 
       - name: Install dependencies
+        working-directory: Book_Hub/frontend  # Key change
         run: |
-          # First ensure package-lock.json exists
-          if [ ! -f "package-lock.json" ]; then
-            npm install --package-lock-only
-          fi
+          ls -la  # Verify files
           npm ci --strict-peer-deps
           npm cache clean --force
 
       - name: Build app
+        working-directory: Book_Hub/frontend
         run: npm run build
 
       - name: Login to ACR
@@ -44,6 +44,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Build and push image
+        working-directory: Book_Hub/frontend
         run: |
           docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }} .
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
