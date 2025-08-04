@@ -8,49 +8,47 @@ on:
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Install frontend dependencies
-      working-directory: Book_Hub/frontend
-      run: npm ci
+      - name: Install frontend dependencies
+        working-directory: Book_Hub/frontend
+        run: npm ci
 
-    - name: Run npm audit
-      working-directory: Book_Hub/frontend
-      run: npm audit --audit-level=high
+      - name: Run npm audit
+        working-directory: Book_Hub/frontend
+        run: npm audit --audit-level=high
 
-    - name: Build frontend app
-      working-directory: Book_Hub/frontend
-      run: npm run build
+      - name: Build frontend app
+        working-directory: Book_Hub/frontend
+        run: npm run build
 
-    - name: Build Docker image (optional step)
-      working-directory: Book_Hub/frontend
-      run: docker build -t bookhub-frontend:staging .
+      - name: Build Docker image (optional step)
+        working-directory: Book_Hub/frontend
+        run: docker build -t bookhub-frontend:staging .
 
-    - name: Install Trivy
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-        sudo apt-get update
-        sudo apt-get install -y trivy
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
 
-    - name: Run Trivy scan
-      run: trivy image --severity CRITICAL,HIGH bookhub-frontend:staging
+      - name: Run Trivy scan
+        run: trivy image --severity CRITICAL,HIGH bookhub-frontend:staging
 
-    - name: Deploy to Azure Staging Slot
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: bookhub-frontend
-        slot-name: staging
-        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_STAGING }}
-        package: Book_Hub/frontend/frontend.zip
-        images: bookhub-frontend:staging
+      - name: Deploy to Azure Staging Slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: bookhub-frontend
+          slot-name: staging
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_STAGING }}
+          package: Book_Hub/frontend/frontend.zip
