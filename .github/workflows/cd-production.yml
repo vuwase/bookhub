@@ -1,49 +1,57 @@
-name: Production Deployment
-'on':
+name: CD to Production
+
+on:
   push:
     branches:
       - main
-  workflow_run:
-    workflows:
-      - Security Scanning
-    types:
-      - completed
 
-env:
-  ACR_NAME: bookhubprod
-  APP_NAME: bookhub
-  RESOURCE_GROUP: bookhub-prod-rg
+  workflow_dispatch: {}  # Manual trigger (optional)
 
 jobs:
-  deploy-prod:
+  deploy-production:
     runs-on: ubuntu-latest
-    environment: production
+    environment: production  # Optional: protects prod deploy with manual approval
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Build Docker
-        run: docker build -t ${{ env.APP_NAME }}:${{ github.sha }} .
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
 
-      - name: Login to ACR
-        run: |
-          echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.ACR_NAME }}.azurecr.io \
-            -u ${{ secrets.ACR_USERNAME }} --password-stdin
+    - name: Install frontend dependencies
+      working-directory: Book_Hub/frontend
+      run: npm ci
 
-      - name: Push to Registry
-        run: |
-          docker tag ${{ env.APP_NAME }}:${{ github.sha }} \
-            ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:prod-${{ github.sha }}
-          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:prod-${{ github.sha }}
+    - name: Run npm audit
+      working-directory: Book_Hub/frontend
+      run: npm audit --audit-level=high
 
-      - name: Deploy to Azure
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: bookhub-prod
-          publish-profile: ${{ secrets.AZURE_PROD_PUBLISH_PROFILE }}
-          images: ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:prod-${{ github.sha
-            }}
+    - name: Build frontend
+      working-directory: Book_Hub/frontend
+      run: npm run build
 
-      - name: Verify Deployment
-        run: |
-          curl -sSf https://bookhub-prod.example.com/health | grep "OK"
+    - name: Build Docker image (frontend)
+      working-directory: Book_Hub/frontend
+      run: docker build -t bookhub-frontend:prod .
+
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install -y trivy
+
+    - name: Run Trivy scan
+      run: trivy image --severity CRITICAL,HIGH bookhub-frontend:prod
+
+    - name: Deploy to Azure Production
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
+        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_PROD }}
+        package: Book_Hub/frontend
