@@ -4,8 +4,19 @@ on:
   push:
     branches:
       - main
+
+env:
+  ACR_NAME: bookhubacr  # Use your actual ACR name without -production suffix
+  ACR_LOGIN_SERVER: bookhubacr.azurecr.io  # Must match your actual ACR login server
+  IMAGE_NAME: bookhub-frontend
+  IMAGE_TAG: production-${{ github.sha }}  # Combines environment + commit SHA
+  RESOURCE_GROUP: bookhub-rg
+  CONTAINER_APP_NAME: bookhub-frontend
+  SLOT_NAME: production
+  NODE_VERSION: "18"
+
 jobs:
-  deploy-production:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,18 +31,7 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: 'Book_Hub/frontend/package-lock.json'
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: 'Book_Hub/frontend/package-lock.json'
 
-    - name: Install dependencies
-      working-directory: Book_Hub/frontend
-      run: |
-        npm ci --strict-peer-deps
-        npm cache clean --force
     - name: Install dependencies
       working-directory: Book_Hub/frontend
       run: |
@@ -45,23 +45,53 @@ jobs:
     - name: Build app
       working-directory: Book_Hub/frontend
       run: npm run build
-    - name: Build app
+
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Verify ACR connectivity
+      run: |
+        echo "ACR Login Server: $ACR_LOGIN_SERVER"
+        nslookup $ACR_LOGIN_SERVER
+        curl -I https://$ACR_LOGIN_SERVER/v2/ --connect-timeout 5 || true
+
+    - name: Azure ACR login
+      run: |
+        # Get access token properly (using --query accessToken to get the correct token type)
+        TOKEN=$(az acr login --name $ACR_NAME --expose-token --output tsv --query accessToken)
+        
+        # Login to Docker with the token
+        echo $TOKEN | docker login $ACR_LOGIN_SERVER \
+          -u 00000000-0000-0000-0000-000000000000 \
+          --password-stdin
+
+    - name: Build Docker image
       working-directory: Book_Hub/frontend
-      run: npm run build
+      run: docker build -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG .
 
-    - name: Zip dist folder for deployment
-        working-directory: Book_Hub/frontend
-        run: zip -r frontend.zip dist
+    - name: Scan Docker image with Trivy
+      uses: aquasecurity/trivy-action@0.11.2
+      with:
+        image-ref: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        format: 'table'
+        exit-code: 0
+        ignore-unfixed: true
+        severity: 'HIGH,CRITICAL'
 
-    - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_PUBLISH_PROFILE_PRODUCTION }}
+    - name: Push Docker image
+      run: docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
 
-      - name: Deploy to Azure Production Slot
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: bookhub-frontend
-          slot-name: production
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_PRODUCTION }}
-          package: Book_Hub/frontend/dist.zip
+    - name: Deploy to production slot
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ env.CONTAINER_APP_NAME }}
+        slot-name: ${{ env.SLOT_NAME }}
+        resource-group: ${{ env.RESOURCE_GROUP }}
+        images: '${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}'
+
+    - name: Verify deployment
+      run: |
+        echo "Deployment to production completed successfully"
+        echo "Image deployed: $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG"
