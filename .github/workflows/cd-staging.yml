@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy-production:
+  deploy-staging:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +22,7 @@ jobs:
         working-directory: Book_Hub/frontend
         run: npm ci
 
-      - name: Run npm audit
+      - name: Run security audit (non-blocking)
         working-directory: Book_Hub/frontend
         run: npm audit --audit-level=high || true
 
@@ -32,11 +32,8 @@ jobs:
 
       - name: Zip frontend build output
         working-directory: Book_Hub/frontend/dist
-        run: zip -r ../frontend.zip .
+        run: zip -r ../dist.zip .
 
-
-      # - name: Build Docker image (optional, for scan purposes)
-      # Add 'uses' or 'run' property if you want to use this step, or uncomment and configure as needed.
       - name: Azure Login
         uses: azure/login@v1
         with:
@@ -47,5 +44,4 @@ jobs:
         with:
           app-name: bookhub-frontend
           slot-name: staging
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_STAGING }}
           package: Book_Hub/frontend/dist.zip
