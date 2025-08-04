@@ -30,23 +30,17 @@ jobs:
         working-directory: Book_Hub/frontend
         run: npm run build
 
-
       - name: Zip frontend build output
         working-directory: Book_Hub/frontend/dist
         run: zip -r ../frontend.zip .
 
       # - name: Build Docker image (optional, for scan purposes)
       # Add 'uses' or 'run' property if you want to use this step, or uncomment and configure as needed.
-      - name: Zip build output
 
-        working-directory: Book_Hub/frontend
-        run: zip -r frontend.zip dist
-
-      
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Staging Slot
         uses: azure/webapps-deploy@v3
