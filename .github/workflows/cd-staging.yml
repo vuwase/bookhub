@@ -17,17 +17,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures full history including package-lock.json
+          fetch-depth: 0  
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'Book_Hub/frontend/package-lock.json'  # Specific path
+          cache-dependency-path: 'Book_Hub/frontend/package-lock.json'
 
       - name: Install dependencies
-        working-directory: Book_Hub/frontend  # Key change
+        working-directory: Book_Hub/frontend
         run: |
           ls -la  # Verify files
           npm ci --strict-peer-deps
