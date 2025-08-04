@@ -3,7 +3,7 @@ name: CD to Staging
 on:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   deploy-staging:
