@@ -1,0 +1,49 @@
+name: Production Deployment
+'on':
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - Security Scanning
+    types:
+      - completed
+
+env:
+  ACR_NAME: bookhubprod
+  APP_NAME: bookhub
+  RESOURCE_GROUP: bookhub-prod-rg
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build Docker
+        run: docker build -t ${{ env.APP_NAME }}:${{ github.sha }} .
+
+      - name: Login to ACR
+        run: |
+          echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.ACR_NAME }}.azurecr.io \
+            -u ${{ secrets.ACR_USERNAME }} --password-stdin
+
+      - name: Push to Registry
+        run: |
+          docker tag ${{ env.APP_NAME }}:${{ github.sha }} \
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:prod-${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:prod-${{ github.sha }}
+
+      - name: Deploy to Azure
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: bookhub-prod
+          publish-profile: ${{ secrets.AZURE_PROD_PUBLISH_PROFILE }}
+          images: ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:prod-${{ github.sha
+            }}
+
+      - name: Verify Deployment
+        run: |
+          curl -sSf https://bookhub-prod.example.com/health | grep "OK"

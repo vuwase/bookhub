@@ -1,0 +1,48 @@
+name: Staging Deployment
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+env:
+  ACR_NAME: "bookhubstage"
+  APP_NAME: "bookhub"
+
+jobs:
+  deploy-stage:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: |
+          npm test
+          npm run e2e
+
+      - name: Build Docker
+        run: docker build -t ${{ env.APP_NAME }}:${{ github.sha }} .
+
+      - name: Push to Staging Registry
+        run: |
+          docker tag ${{ env.APP_NAME }}:${{ github.sha }} \
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:stage-${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:stage-${{ github.sha }}
+
+      - name: Deploy to Staging
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'bookhub-stage'
+          slot-name: 'staging'
+          publish-profile: ${{ secrets.AZURE_STAGE_PUBLISH_PROFILE }}
+          images: '${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:stage-${{ github.sha }}'
+
+      - name: Run Smoke Tests
+        run: |
+          curl -sSf https://bookhub-staging.example.com/health
+          npm run smoke-test -- --url=https://bookhub-staging.example.com
