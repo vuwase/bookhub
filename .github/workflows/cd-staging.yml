@@ -1,47 +1,48 @@
-name: CD to Staging
+name: Deploy to Staging
 
 on:
   push:
-    branches:
-      - develop
+    branches: [develop]
+
+env:
+  APP_NAME: "bookhub-frontend"
+  SLOT_NAME: "staging"
+  RESOURCE_GROUP: "bookhub-rg"
+  ACR_NAME: "bookhubacr"
+  NODE_VERSION: "18"
 
 jobs:
-  deploy-staging:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install frontend dependencies
-        working-directory: Book_Hub/frontend
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run security audit (non-blocking)
-        working-directory: Book_Hub/frontend
-        run: npm audit --audit-level=high || true
-
-      - name: Build frontend app
-        working-directory: Book_Hub/frontend
+      - name: Build app
         run: npm run build
 
-      - name: Zip frontend build output
-        working-directory: Book_Hub/frontend/dist
-        run: zip -r ../dist.zip .
-
-      - name: Azure Login
+      - name: Login to ACR
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Azure Staging Slot
+      - name: Build and push image
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }} .
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
+
+      - name: Deploy to staging slot
         uses: azure/webapps-deploy@v3
         with:
-          app-name: bookhub-frontend
-          slot-name: staging
-          package: Book_Hub/frontend/dist.zip
+          app-name: ${{ env.APP_NAME }}
+          slot-name: ${{ env.SLOT_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          images: '${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}'
