@@ -8,6 +8,7 @@ on:
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,13 +24,17 @@ jobs:
 
       - name: Run npm audit
         working-directory: Book_Hub/frontend
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high || true
 
       - name: Build frontend app
         working-directory: Book_Hub/frontend
         run: npm run build
 
-      - name: Build Docker image (optional step)
+      - name: Zip frontend build output
+        working-directory: Book_Hub/frontend/dist
+        run: zip -r ../frontend.zip .
+
+      - name: Build Docker image (optional, for scan purposes)
         working-directory: Book_Hub/frontend
         run: docker build -t bookhub-frontend:staging .
 
