@@ -5,6 +5,60 @@
 
 ---
 
+## 🚀 Phase 3: Full Automated Deployment, Monitoring & Professional Release
+
+This section documents enhancements made for **Summative Phase 3**, including automated CI/CD pipelines, DevSecOps practices, and live monitoring.
+
+
+### 🌍 Live URLs
+
+| Environment | URL |
+|-------------|-----|
+| ✅ Staging   | [https://bookhub-frontend-staging.azurewebsites.net](https://bookhub-frontend-staging.azurewebsites.net) |
+| ✅ Production| [https://bookhub-frontend.azurewebsites.net](https://bookhub-frontend.azurewebsites.net) |
+
+---
+
+### 🎥 Demo Video
+
+📹 [Click here to watch the demo video]
+
+---
+
+### 🔁 CI/CD Pipeline Highlights
+
+- Full GitHub Actions pipeline for build → test → security scan → deployment
+- `develop` branch auto-deploys to **staging**
+- `main` branch triggers **manual production deployment** (with approvals)
+- Docker image pushed to **Azure Container Registry (ACR)**
+
+---
+
+### 🔐 DevSecOps Integration
+
+- `npm audit` checks for dependency vulnerabilities
+- `Trivy` scans Docker images before pushing to ACR
+- Security scan results are logged in CI/CD run output
+- All critical vulnerabilities are addressed before deployment
+
+---
+
+### 📊 Monitoring & Observability
+
+- Azure Application Insights used for both frontend and backend
+- Azure Monitor dashboards track performance, availability, and logs
+- Alerts configured:
+  - CPU usage > 75%
+  - Request failures over 1 minute
+
+---
+
+### 📓 CHANGELOG
+
+View detailed version updates in [`CHANGELOG.md`](./CHANGELOG.md)
+
+---
+
 ## 📦 Project Structure
 
 Book\_Hub/
@@ -13,6 +67,7 @@ Book\_Hub/
 ├── docker-compose.yml
 ├── README.md
 └── phase.md
+
 
 ## 🐳 Local Development with Docker
 
@@ -34,14 +89,14 @@ docker-compose down
 
 Environment variables are configured in `docker-compose.yml` and `.env` files. Key backend variables include:
 
-* `DB_HOST`
-* `DB_USER`
-* `DB_PASSWORD`
-* `DB_NAME`
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_NAME`
 
 Frontend may use:
 
-* `REACT_APP_API_URL` — URL to access the backend
+- `REACT_APP_API_URL` — URL to access the backend
 
 ---
 
@@ -62,17 +117,31 @@ The frontend is deployed to **Azure App Service** and accessible publicly:
 
 ## 📝 Features
 
+
+- 📖 Book discovery interface
+- 🔐 User authentication
+- 🌍 Multilingual support
+- 📍 Geolocation-aware search
+- 🔔 Real-time notifications (coming soon)
+
+
 * 📖 Book discovery interface
 * 🔐 User authentication
 * 🌍 Multilingual support
 * 📍 Geolocation-aware search
 * 🔔 Real-time notifications (coming soon)
 
+
 ## 👩‍💻 Contributors
 
-* Vaste Uwase
+- Vaste Uwase
 
 ## 📄 Notes
+
+
+- Uses PostgreSQL with PostGIS for spatial data
+- Docker ensures consistent development and deployment
+- Code and CI/CD integrated via GitHub & Azure
 
 * Uses PostgreSQL with PostGIS for spatial data
 * Docker ensures consistent development and deployment
