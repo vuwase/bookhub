@@ -681,7 +681,7 @@ const MobileHeader: React.FC = () => {
             📚 Book Hub
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Discover your next favorite book
+            Explore your next favorite book
           </Typography>
         </Box>
         <Divider />
