@@ -34,9 +34,9 @@ jobs:
         working-directory: Book_Hub/frontend/dist
         run: zip -r ../frontend.zip .
 
+
       # - name: Build Docker image (optional, for scan purposes)
       # Add 'uses' or 'run' property if you want to use this step, or uncomment and configure as needed.
-
       - name: Azure Login
         uses: azure/login@v1
         with:
