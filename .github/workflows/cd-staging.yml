@@ -14,7 +14,6 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,10 +42,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build and push image
-        working-directory: Book_Hub/frontend
+      - name: Build and push
         run: |
           docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }} .
+          # No explicit login needed with Managed Identity
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
 
       - name: Deploy to staging slot
