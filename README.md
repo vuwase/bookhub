@@ -9,7 +9,6 @@
 
 This section documents enhancements made for **Summative Phase 3**, including automated CI/CD pipelines, DevSecOps practices, and live monitoring.
 
----
 
 ### 🌍 Live URLs
 
@@ -69,6 +68,7 @@ Book\_Hub/
 ├── README.md
 └── phase.md
 
+
 ## 🐳 Local Development with Docker
 
 ### ▶️ Start the App
@@ -105,6 +105,7 @@ Frontend may use:
 ### 🔧 Backend
 
 The backend is containerized and configured to run via Docker. Refer to `phase.md` for setup and deployment instructions.
+🔗 [https://bookhub-backend.azurewebsites.net](https://bookhub-backend.azurewebsites.net)
 
 ### 🖥️ Frontend
 
@@ -116,22 +117,34 @@ The frontend is deployed to **Azure App Service** and accessible publicly:
 
 ## 📝 Features
 
+
 - 📖 Book discovery interface
 - 🔐 User authentication
 - 🌍 Multilingual support
 - 📍 Geolocation-aware search
 - 🔔 Real-time notifications (coming soon)
 
----
+
+* 📖 Book discovery interface
+* 🔐 User authentication
+* 🌍 Multilingual support
+* 📍 Geolocation-aware search
+* 🔔 Real-time notifications (coming soon)
+
 
 ## 👩‍💻 Contributors
 
 - Vaste Uwase
 
----
-
 ## 📄 Notes
+
 
 - Uses PostgreSQL with PostGIS for spatial data
 - Docker ensures consistent development and deployment
 - Code and CI/CD integrated via GitHub & Azure
+
+* Uses PostgreSQL with PostGIS for spatial data
+* Docker ensures consistent development and deployment
+* Code and CI/CD integrated via GitHub & Azure
+
+  <!-- This change was made for peer review branch -->
