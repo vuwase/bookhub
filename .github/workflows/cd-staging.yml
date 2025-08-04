@@ -30,7 +30,7 @@ jobs:
       working-directory: Book_Hub/frontend
       run: npm run build
 
-    - name: Build Docker image (frontend)
+    - name: Build Docker image (optional step)
       working-directory: Book_Hub/frontend
       run: docker build -t bookhub-frontend:staging .
 
@@ -52,4 +52,4 @@ jobs:
         app-name: ${{ secrets.AZURE_WEBAPP_NAME_STAGING }}
         slot-name: staging
         publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_STAGING }}
-        package: Book_Hub/frontend
+        package: Book_Hub/frontend/frontend.zip
