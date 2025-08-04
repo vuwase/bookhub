@@ -49,7 +49,8 @@ jobs:
     - name: Deploy to Azure Staging Slot
       uses: azure/webapps-deploy@v3
       with:
-        app-name: ${{ secrets.AZURE_WEBAPP_NAME_STAGING }}
+        app-name: bookhub-frontend
         slot-name: staging
         publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_STAGING }}
         package: Book_Hub/frontend/frontend.zip
+        images: bookhub-frontend:staging
