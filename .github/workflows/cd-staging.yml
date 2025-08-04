@@ -1,47 +1,76 @@
-name: CD to Staging
+name: CD - Deploy BookHub Staging
 
 on:
   push:
     branches:
-      - main
+      - develop
+
+env:
+  ACR_NAME: bookhubacr
+  ACR_LOGIN_SERVER: bookhubacr.azurecr.io
+  IMAGE_NAME: bookhub-frontend
+  IMAGE_TAG: ${{ github.sha }}  # Using commit SHA for unique tagging
+  RESOURCE_GROUP: bookhub-rg
+  CONTAINER_APP_NAME: bookhub-frontend
+  SLOT_NAME: staging
+  NODE_VERSION: "18"
 
 jobs:
-  deploy-staging:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: 'Book_Hub/frontend/package-lock.json'
 
-      - name: Install frontend dependencies
-        working-directory: Book_Hub/frontend
-        run: npm ci
+    - name: Install dependencies
+      working-directory: Book_Hub/frontend
+      run: |
+        npm ci --strict-peer-deps
+        npm cache clean --force
 
-      - name: Run security audit (non-blocking)
-        working-directory: Book_Hub/frontend
-        run: npm audit --audit-level=high || true
+    - name: Build app
+      working-directory: Book_Hub/frontend
+      run: npm run build
 
-      - name: Build frontend app
-        working-directory: Book_Hub/frontend
-        run: npm run build
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Zip frontend build output
-        working-directory: Book_Hub/frontend/dist
-        run: zip -r ../dist.zip .
+    - name: Azure ACR login using access token
+      run: |
+        az acr login --name $ACR_NAME --expose-token | jq -r '.accessToken' | \
+        docker login $ACR_LOGIN_SERVER -u 00000000-0000-0000-0000-000000000000 --password-stdin
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Build Docker image
+      working-directory: Book_Hub/frontend
+      run: docker build -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG .
 
-      - name: Deploy to Azure Staging Slot
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: bookhub-frontend
-          slot-name: staging
-          package: Book_Hub/frontend/dist.zip
+    - name: Scan Docker image with Trivy
+      uses: aquasecurity/trivy-action@0.11.2
+      with:
+        image-ref: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        format: 'table'
+        exit-code: 0
+        ignore-unfixed: true
+
+    - name: Push Docker image
+      run: docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+
+    - name: Deploy to staging slot
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ env.CONTAINER_APP_NAME }}
+        slot-name: ${{ env.SLOT_NAME }}
+        resource-group: ${{ env.RESOURCE_GROUP }}
+        images: '${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}'
