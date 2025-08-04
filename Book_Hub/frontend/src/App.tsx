@@ -492,7 +492,7 @@ const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const genreColors: Record<string, string> = {
       "Classic Literature": "#f59e0b",
       "Science Fiction": "#f97316",
-      Fantasy: "#053d96ff",
+      Fantasy: "#240596ff",
       Romance: "#ec4899",
       dystopian: "#7c3aed",
       "Coming of Age": "#0891b2",
