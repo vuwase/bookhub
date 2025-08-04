@@ -1647,11 +1647,11 @@ const BookHubContent: React.FC = () => {
         >
           <Container maxWidth="xl">
             <Box sx={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-              <Typography variant="h1" gutterBottom sx={{ color: "green", mb: 1 }}>
+              <Typography variant="h1" gutterBottom sx={{ color: "white", mb: 1 }}>
                 📚 Book Hub
               </Typography>
               <Typography variant="h6" sx={{ mb: 1, fontWeight: 400, opacity: 0.95 }}>
-                Discover your next favorite book
+                Explore your next favorite book
               </Typography>
             </Box>
           </Container>
