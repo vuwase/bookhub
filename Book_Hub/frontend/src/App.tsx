@@ -96,7 +96,7 @@ const theme = createTheme({
     h1: {
       fontWeight: 800,
       fontSize: "clamp(1.75rem, 5vw, 3.5rem)",
-      background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
+      background: "linear-gradient(135deg, #2563eb 0%, #3aedbdff 100%)",
       backgroundClip: "text",
       WebkitBackgroundClip: "text",
       WebkitTextFillColor: "transparent",
