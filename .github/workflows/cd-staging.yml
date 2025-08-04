@@ -30,6 +30,7 @@ jobs:
         working-directory: Book_Hub/frontend
         run: npm run build
 
+
       - name: Zip frontend build output
         working-directory: Book_Hub/frontend/dist
         run: zip -r ../frontend.zip .
