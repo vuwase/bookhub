@@ -492,8 +492,8 @@ const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const genreColors: Record<string, string> = {
       "Classic Literature": "#f59e0b",
       "Science Fiction": "#f97316",
-      Fantasy: "#053d96ff",
-      Romance: "#ec4899",
+      Fantasy: "#240596ff",
+      Romance: "#a248ecff",
       dystopian: "#7c3aed",
       "Coming of Age": "#0891b2",
       Fiction: "#dc2626",
@@ -681,7 +681,7 @@ const MobileHeader: React.FC = () => {
             📚 Book Hub
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Discover your next favorite book
+            Explore your next favorite book
           </Typography>
         </Box>
         <Divider />
