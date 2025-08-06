@@ -1,16 +1,19 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.tsx';
 import * as Sentry from '@sentry/react';
+import { BrowserTracing } from '@sentry/tracing';
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  integrations: [new Sentry.BrowserTracing()]
+  dsn: import.meta.env.VITE_SENTRY_DSN, // ✅ use VITE_ prefix + import.meta.env
+  integrations: [new BrowserTracing()],
 });
 
-createRoot(document.getElementById('root')!).render(
+
+const root = createRoot(document.getElementById('root') as HTMLElement);
+root.render(
   <StrictMode>
     <App />
-  </StrictMode>,
-)
+  </StrictMode>
+);
