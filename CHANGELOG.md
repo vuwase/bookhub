@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Updated homepage title from “Welcome” to “Explore Books”
+- Updated homepage title from “Discover” to “Explore Books”
 - Improved deployment pipeline by adding Trivy container scan
 
 ## [1.0.1] - 2025-08-02

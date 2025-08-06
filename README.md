@@ -21,7 +21,7 @@ This section documents enhancements made for **Summative Phase 3**, including au
 
 ### 🎥 Demo Video
 
-📹 [Click here to watch the demo video]
+[Demo Video](https://vimeo.com/1107766007/23277eae9f?ts=4000&share=copy)
 
 ---
 
