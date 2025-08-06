@@ -493,7 +493,7 @@ const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       "Classic Literature": "#f59e0b",
       "Science Fiction": "#f97316",
       Fantasy: "#240596ff",
-      Romance: "#ec4899",
+      Romance: "#a248ecff",
       dystopian: "#7c3aed",
       "Coming of Age": "#0891b2",
       Fiction: "#dc2626",
